@@ -24,4 +24,5 @@ public class Product : AggregateRoot<Guid>
             maxLength: ProductConsts.MaxNameLength
         ).Trim();
     }
+
 }
