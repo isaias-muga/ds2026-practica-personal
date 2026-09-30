@@ -1,36 +1,27 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
 namespace SmartPantry.Products;
 
-public class ProductAppService : SmartPantryAppService, IProductAppService
+public class ProductAppService :
+    CrudAppService<Product, ProductDto, Guid, PagedAndSortedResultRequestDto, CreateProductDto, UpdateProductDto>,
+    IProductAppService
 {
-    private readonly IRepository<Product, Guid> _productRepository;
-
-    public ProductAppService(IRepository<Product, Guid> productRepository)
+    public ProductAppService(IRepository<Product, Guid> repository) : base(repository)
     {
-        _productRepository = productRepository;
     }
 
-    public async Task<ProductDto> CreateAsync(CreateProductDto input)
+    protected override Task<Product> MapToEntityAsync(CreateProductDto createInput)
     {
-        // The Id is generated internally using the IGuidGenerator provided by the base class
-        var product = new Product(
-            GuidGenerator.Create(),
-            input.Name
-        );
-
-        await _productRepository.InsertAsync(product);
-
-        return ObjectMapper.Map<Product, ProductDto>(product);
+        return Task.FromResult(new Product(GuidGenerator.Create(), createInput.Name));
     }
 
-    public async Task<ProductDto> GetAsync(Guid id)
+    protected override Task MapToEntityAsync(UpdateProductDto updateInput, Product entity)
     {
-        // GetAsync automatically throws 404 if the Id doesn't exist
-        var product = await _productRepository.GetAsync(id);
-
-        return ObjectMapper.Map<Product, ProductDto>(product);
+        entity.SetName(updateInput.Name);
+        return Task.CompletedTask;
     }
 }

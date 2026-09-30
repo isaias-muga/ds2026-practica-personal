@@ -1,6 +1,8 @@
 ﻿using Shouldly;
 using System;
 using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Modularity;
 using Volo.Abp.Validation;
 using Xunit;
@@ -38,5 +40,25 @@ public abstract class ProductAppService_Tests<TStartupModule> : SmartPantryAppli
         {
             await _productAppService.CreateAsync(new CreateProductDto { Name = "" });
         });
+    }
+
+    [Fact]
+    public async Task Should_Create_List_Update_Get_And_Delete_Product()
+    {
+        var created = await _productAppService.CreateAsync(new CreateProductDto { Name = "Whole milk 1L" });
+
+        var list = await _productAppService.GetListAsync(new PagedAndSortedResultRequestDto());
+        list.Items.ShouldContain(p => p.Id == created.Id);
+
+        var updated = await _productAppService.UpdateAsync(created.Id, new UpdateProductDto { Name = "Skim milk 1L" });
+        updated.Name.ShouldBe("Skim milk 1L");
+
+        var fetched = await _productAppService.GetAsync(created.Id);
+        fetched.Name.ShouldBe("Skim milk 1L");
+
+        await _productAppService.DeleteAsync(created.Id);
+
+        await Should.ThrowAsync<EntityNotFoundException>(async () =>
+            await _productAppService.GetAsync(created.Id));
     }
 }
